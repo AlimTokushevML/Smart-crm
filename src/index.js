@@ -1,5 +1,6 @@
 import express from 'express';
 import { deals, clients } from './data.js';
+import './db.js';
 const app = express();
 const PORT = 3000;
 app.use(express.json());
@@ -36,10 +37,21 @@ app.get('/clients/:id', (req, res) => {
         res.status(404).json({ error: 'user not found' });
     }
 });
+app.get('/deals/:id', (req, res) => {
+    const id = Number(req.params.id);
+    const deal = deals.find(d => d.id === id);
+    if (deal) {
+        res.json(deal);
+    }
+    else {
+        res.status(404).json({ error: 'Deal not found' });
+    }
+});
 app.post('/clients', (req, res) => {
     const newClient = req.body;
     if (!newClient.id || !newClient.name || !newClient.email) {
-        res.status(400).json({ error: 'missing required field' });
+        res
+            .status(400).json({ error: 'missing required field' });
         return;
     }
     clients.push(newClient);
