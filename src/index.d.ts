@@ -1,2 +1,2 @@
-import './db.js';
+export {};
 //# sourceMappingURL=index.d.ts.map

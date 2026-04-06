@@ -9,12 +9,4 @@ export const pool = new Pool({
     password: process.env.DB_PASSWORD,
     port: Number(process.env.DB_PORT),
 });
-pool.query('SELECT NOW()', (err, res) => {
-    if (err) {
-        console.error('DB connection failed:', err);
-    }
-    else {
-        console.log('DB connected:', res.rows[0]);
-    }
-});
 //# sourceMappingURL=db.js.map
