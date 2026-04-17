@@ -6,6 +6,7 @@ dotenv.config();
 
 const token = process.env.TELEGRAM_TOKEN!;
 const bot = new TelegramBot(token, { polling: true });
+const sessions: Record<number, any> = {};
 
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
@@ -52,4 +53,29 @@ bot.onText(/\/client (\d+)/, async (msg, match) => {
         ? 'No deals'
         : dealsResult.rows.map((d) => `${d.title} - $${d.amount}`).join('\n');
     bot.sendMessage(chatId, `${client.name} — ${client.email}\n\nDeals:\n${dealsText}`);
+});
+
+bot.onText(/\/newclient/, (msg) => {
+    const chatId = msg.chat.id;
+    sessions[chatId] = { step: 'waiting_name' };
+    bot.sendMessage(chatId, 'What is the client\'s name?');
+});
+
+bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    const text = msg.text;
+
+    if (!sessions[chatId]) return;
+
+    if (sessions[chatId].step === 'waiting_name') {
+        sessions[chatId].name = text;
+        sessions[chatId].step = 'waiting_email';
+        bot.sendMessage(chatId, 'What is their email?');
+    } else if (sessions[chatId].step === 'waiting_email') {
+        const name = sessions[chatId].name;
+        const email = text;
+        await pool.query('INSERT INTO clients (name, email) VALUES ($1, $2)', [name, email]);
+        delete sessions[chatId];
+        bot.sendMessage(chatId, `Client ${name} added successfully!`);
+    }
 });
