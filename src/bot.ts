@@ -61,6 +61,12 @@ bot.onText(/\/newclient/, (msg) => {
     bot.sendMessage(chatId, 'What is the client\'s name?');
 });
 
+bot.onText(/\/newdeal/, (msg) => {
+    const chatId = msg.chat.id;
+    sessions[chatId] = { step: 'waiting_title' };
+    bot.sendMessage(chatId, 'What is the deal\'s title?');
+});
+
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const text = msg.text;
@@ -77,5 +83,30 @@ bot.on('message', async (msg) => {
         await pool.query('INSERT INTO clients (name, email) VALUES ($1, $2)', [name, email]);
         delete sessions[chatId];
         bot.sendMessage(chatId, `Client ${name} added successfully!`);
+    } else if (sessions[chatId].step === 'waiting_title') {
+        sessions[chatId].title = text;
+        sessions[chatId].step = 'waiting_amount';
+        bot.sendMessage(chatId, 'What is the amount of the deal?');
+    } else if (sessions[chatId].step === 'waiting_amount') {
+        sessions[chatId].amount = Number(text);
+        sessions[chatId].step = 'waiting_client_id';
+        bot.sendMessage(chatId, 'What is the client_id of the deal?');
+    } else if (sessions[chatId].step === 'waiting_client_id') {
+    const title = sessions[chatId].title;
+    const amount = Number(sessions[chatId].amount);
+    const client_id = Number(text);
+    await pool.query('INSERT INTO deals (title, amount, client_id) VALUES ($1, $2, $3)', [title, amount, client_id]);
+    delete sessions[chatId];
+    bot.sendMessage(chatId, `Deal ${title} added successfully!`);
+}
     }
-});
+);
+
+
+
+
+
+    
+
+    
+
